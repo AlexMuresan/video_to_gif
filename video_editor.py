@@ -6,18 +6,19 @@ import datetime
 import cv2
 import imageio
 
-
 def onChange(trackbarValue):
-    cap.set(cv2.CAP_PROP_POS_FRAMES,trackbarValue)
-    err,img = cap.read()
-    cv2.imshow("Video", img)
-    pass
+    if play_video:
+        cap.set(cv2.CAP_PROP_POS_FRAMES,trackbarValue)
+        err,img = cap.read()
+        cv2.imshow("Video", img)
+        pass
 
 
 end = 10e-5
 
 cv2.namedWindow('Video')
 gathering = False
+play_video = True
 
 frames_for_gif = []
 
@@ -40,7 +41,8 @@ cv2.createTrackbar("Progress", "Video", 0, int(total_frames), onChange)
 
 while cap.isOpened():
     start = time.time()
-    err,img = cap.read()
+    if play_video:
+        err,img = cap.read()
     
     if gathering == True:
         frames_for_gif.append(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
@@ -51,10 +53,14 @@ while cap.isOpened():
 
     if k == 27:
         break
-    if k == 81:
-        cv2.setTrackbarPos("Progress", "Video", current_frame - 10)
-    if k == 83:
-        cv2.setTrackbarPos("Progress", "Video", current_frame + 10)
+    if k == ord('p') or k == 32:
+        start_frame = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
+        # cv2.waitKey(-1)
+        play_video = not play_video
+    if k == 81 or k == 123:
+        cv2.setTrackbarPos("Progress", "Video", current_frame - 30)
+    if k == 83 or k == 124:
+        cv2.setTrackbarPos("Progress", "Video", current_frame + 30)
     if k == ord('s'):
         start_frame = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
         gathering = True
@@ -67,8 +73,9 @@ while cap.isOpened():
         print(f"Saving gif as {export_name}...")
         imageio.mimsave(export_path, frames_for_gif, 'GIF')
 
-    cv2.imshow("Video", img)
-    print(f"{int(current_frame)} / {int(total_frames)} - {int(1/end)} fps   ", end='\r')
+    if play_video:
+        cv2.imshow("Video", img)
+        print(f"{int(current_frame)} / {int(total_frames)} - {int(1/end)} fps   ", end='\r')
 
     end = time.time() - start
     
